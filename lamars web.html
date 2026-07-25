@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Baby Rose Beauty</title>
+  <style>
+    *{box-sizing:border-box;font-family:Arial,sans-serif}
+    body{margin:0;background:#fff7fa;color:#4a2a3d}
+    .topbar{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:20px 30px;background:#f8d7e6;border-bottom:1px solid #efb9cf;
+      gap:20px;flex-wrap:wrap
+    }
+    .topbar h1{margin:0}
+    .topbar p{margin:4px 0 0}
+    .auth-box{display:flex;gap:10px;flex-wrap:wrap}
+    input,textarea,button{
+      padding:12px 14px;border-radius:12px;border:1px solid #e5b2c7;font-size:14px
+    }
+    button{
+      background:#d97aa3;color:#fff;border:none;cursor:pointer
+    }
+    button.ghost{
+      background:#fff;color:#d97aa3;border:1px solid #d97aa3
+    }
+    .container{max-width:1100px;margin:auto;padding:24px}
+    .card{
+      background:#fff;border:1px solid #f0c7d7;border-radius:22px;
+      box-shadow:0 10px 30px rgba(217,122,163,.08);padding:22px
+    }
+    .hero{
+      display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px
+    }
+    .hero-art{font-size:84px;color:#d97aa3}
+    .section-title{margin:18px 0}
+    .products{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px
+    }
+    .product img{
+      width:100%;height:210px;object-fit:cover;border-radius:18px
+    }
+    .product h4{margin:12px 0 6px}
+    .product p{min-height:48px}
+    .grid2{
+      display:grid;grid-template-columns:1fr 1fr;gap:18px
+    }
+    .form{display:grid;gap:12px}
+    .list{display:grid;gap:12px}
+    .item{
+      padding:14px;border:1px solid #f0d7e0;border-radius:16px;background:#fffafa;
+      display:flex;justify-content:space-between;gap:12px;align-items:center
+    }
+    .hidden{display:none}
+    @media(max-width:800px){
+      .hero,.grid2{grid-template-columns:1fr;display:grid}
+      .topbar{padding:16px}
+      .container{padding:16px}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>Baby Rose Beauty</h1>
+      <p>Body lotions & scrubs for glowing skin</p>
+    </div>
+
+    <div class="auth-box">
+      <input id="emailInput" type="email" placeholder="Enter your email" />
+      <button id="loginBtn">Continue</button>
+      <button id="logoutBtn" class="ghost hidden">Logout</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero card">
+      <div>
+        <h2>Soft care, sweet glow.</h2>
+        <p>Discover gentle body lotions and scrubs designed for a professional beauty brand look in baby rose tones.</p>
+        <button id="shopBtn">Shop Products</button>
+      </div>
+      <div class="hero-art">✿</div>
+    </section>
+
+    <section id="adminPanel" class="card hidden">
+      <h3>Owner Panel</h3>
+      <div class="grid2">
+        <form id="productForm" class="form">
+          <h4>Add Product</h4>
+          <input id="productName" type="text" placeholder="Product name" required />
+          <input id="productPrice" type="number" min="0" step="0.01" placeholder="Price" required />
+          <input id="productImage" type="url" placeholder="Image URL" required />
+          <textarea id="productDesc" placeholder="Product details" required></textarea>
+          <button type="submit">Add Product</button>
+        </form>
+
+        <div>
+          <h4>Orders</h4>
+          <div id="ordersList" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h3 class="section-title">Products</h3>
+      <div id="productsList" class="products"></div>
+    </section>
+
+    <section id="cartSection" class="card hidden">
+      <h3>Your Order</h3>
+      <div id="cartItems" class="list"></div>
+
+      <form id="orderForm" class="form">
+        <input id="customerAddress" type="text" placeholder="Address" required />
+        <input id="customerPhone" type="tel" placeholder="Phone number" required />
+        <input id="customerQty" type="number" min="1" value="1" required />
+        <button type="submit">Buy</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const OWNER_EMAIL = 'owner@babyrosebeauty.com';
+
+    const emailInput = document.getElementById('emailInput');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const adminPanel = document.getElementById('adminPanel');
+    const productsList = document.getElementById('productsList');
+    const cartSection = document.getElementById('cartSection');
+    const cartItems = document.getElementById('cartItems');
+    const ordersList = document.getElementById('ordersList');
+    const shopBtn = document.getElementById('shopBtn');
+    const productForm = document.getElementById('productForm');
+    const orderForm = document.getElementById('orderForm');
+
+    let currentUser = localStorage.getItem('babyrose_email') || '';
+    let products = JSON.parse(localStorage.getItem('babyrose_products') || '[]');
+    let orders = JSON.parse(localStorage.getItem('babyrose_orders') || '[]');
+    let cart = JSON.parse(localStorage.getItem('babyrose_cart') || '[]');
+
+    const seedProducts = [
+      {
+        name: 'Rose Glow Lotion',
+        price: 12.99,
+        image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=800&q=80',
+        desc: 'Silky body lotion with a soft rose scent.'
+      },
+      {
+        name: 'Pink Sugar Scrub',
+        price: 15.50,
+        image: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=800&q=80',
+        desc: 'Gentle scrub for smooth and radiant skin.'
+      }
+    ];
+
+    if (!products.length) {
+      products = seedProducts;
+      localStorage.setItem('babyrose_products', JSON.stringify(products));
+    }
+
+    function save() {
+      localStorage.setItem('babyrose_products', JSON.stringify(products));
+      localStorage.setItem('babyrose_orders', JSON.stringify(orders));
+      localStorage.setItem('babyrose_cart', JSON.stringify(cart));
+      localStorage.setItem('babyrose_email', currentUser);
+    }
+
+    function render() {
+      emailInput.value = currentUser;
+
+      const isLogged = !!currentUser;
+      const isOwner = currentUser.toLowerCase() === OWNER_EMAIL.toLowerCase();
+
+      logoutBtn.classList.toggle('hidden', !isLogged);
+      loginBtn.classList.toggle('hidden', isLogged);
+      adminPanel.classList.toggle('hidden', !isOwner);
+      cartSection.classList.toggle('hidden', !isLogged);
+
+      productsList.innerHTML = products.map((p, i) => `
+        <div class="product card">
+          <img src="${p.image}" alt="${p.name}" />
+          <h4>${p.name}</h4>
+          <p>${p.desc}</p>
+          <strong>$${Number(p.price).toFixed(2)}</strong>
+          <button onclick="addToCart(${i})">Add to Cart</button>
+        </div>
+      `).join('');
+
+      cartItems.innerHTML = cart.length ? cart.map((item, i) => `
+        <div class="item">
+          <span>${item.name}</span>
+          <span>$${Number(item.price).toFixed(2)}</span>
+          <button onclick="removeFromCart(${i})">Remove</button>
+        </div>
+      `).join('') : '<p>No items in cart.</p>';
+
+      ordersList.innerHTML = orders.length ? orders.map((o) => `
+        <div class="item">
+          <div>
+            <strong>${o.email}</strong><br/>
+            ${o.productName} x ${o.quantity}<br/>
+            ${o.address}<br/>
+            ${o.phone}
+          </div>
+        </div>
+      `).join('') : '<p>No orders yet.</p>';
+    }
+
+    window.addToCart = (i) => {
+      cart.push(products[i]);
+      save();
+      render();
+    };
+
+    window.removeFromCart = (i) => {
+      cart.splice(i, 1);
+      save();
+      render();
+    };
+
+    loginBtn.onclick = () => {
+      const email = emailInput.value.trim();
+      if (!email) return alert('Please enter email');
+      currentUser = email;
+      save();
+      render();
+    };
+
+    logoutBtn.onclick = () => {
+      currentUser = '';
+      cart = [];
+      save();
+      render();
+    };
+
+    shopBtn.onclick = () => {
+      document.getElementById('productsList').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    productForm.onsubmit = (e) => {
+      e.preventDefault();
+      products.unshift({
+        name: document.getElementById('productName').value,
+        price: document.getElementById('productPrice').value,
+        image: document.getElementById('productImage').value,
+        desc: document.getElementById('productDesc').value
+      });
+      productForm.reset();
+      save();
+      render();
+    };
+
+    orderForm.onsubmit = (e) => {
+      e.preventDefault();
+      if (!currentUser) return alert('Please sign in first');
+      if (!cart.length) return alert('Cart is empty');
+
+      const qty = Number(document.getElementById('customerQty').value);
+      const last = cart[cart.length - 1];
+
+      orders.unshift({
+        email: currentUser,
+        address: document.getElementById('customerAddress').value,
+        phone: document.getElementById('customerPhone').value,
+        quantity: qty,
+        productName: last.name,
+        productPrice: last.price
+      });
+
+      cart = [];
+      orderForm.reset();
+      document.getElementById('customerQty').value = 1;
+      save();
+      render();
+      alert('Order sent to owner section!');
+    };
+
+    render();
+  </script>
+</body>
+</html>
